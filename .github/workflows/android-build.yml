@@ -23,14 +23,20 @@ jobs:
       - name: Obter o código
         uses: actions/checkout@v4
 
+      - name: Extrair ZIP (se existir)
+        run: |
+          find . -maxdepth 1 -name "*.zip" | while read -r Z; do
+            echo "Extraindo: $Z"
+            unzip -q -o "$Z" -d _projeto
+          done
+
       - name: Localizar o projeto Android
         id: proj
         run: |
           FILE=$(find . -name settings.gradle.kts -not -path "*/node_modules/*" -not -path "*/.git/*" | head -n 1)
           if [ -z "$FILE" ]; then
-            echo "::error::Projeto Android não encontrado. Envie a pasta android/ completa para o repositório."
-            echo "Arquivos na raiz:"
-            ls -la
+            echo "::error::Projeto Android não encontrado."
+            ls -laR | head -n 50
             exit 1
           fi
           DIR=$(dirname "$FILE")
@@ -45,7 +51,6 @@ jobs:
 
       - name: Instalar componentes do SDK
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
 
